@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+from vision.utils import STEREO_LEFT_INDEX, STEREO_RIGHT_INDEX, open_camera, release_camera
 
 class DepthEstimator:
     def __init__(self, focal_length_px=800, baseline_mm=60):
@@ -8,9 +8,13 @@ class DepthEstimator:
         self.baseline_mm = baseline_mm
         self.stereo = cv2.StereoBM_create(numDisparities=64, blockSize=15)
 
-    def run(self, camL_index=0, camR_index=1):
-        capL = cv2.VideoCapture(camL_index)
-        capR = cv2.VideoCapture(camR_index)
+    def run(self, camL_index=STEREO_LEFT_INDEX, camR_index=STEREO_RIGHT_INDEX):
+        capL = open_camera(camL_index)
+        try:
+            capR = open_camera(camR_index)
+        except RuntimeError:
+            release_camera(capL)
+            raise
 
         while True:
             retL, frameL = capL.read()
@@ -27,15 +31,12 @@ class DepthEstimator:
                 depth_map = (self.focal_length_px * self.baseline_mm) / disparity
                 depth_map[disparity <= 0] = 0
 
-            plt.imshow(depth_map, cmap="plasma")
-            plt.colorbar(label="Mesafe (mm)")
-            plt.title("Gerçek Zamanlı Derinlik Haritası")
-            plt.pause(0.001)
-            plt.clf()
+            # cv2 window instead of matplotlib: pyplot cannot run outside the main thread
+            depth_vis = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+            depth_vis = cv2.applyColorMap(depth_vis, cv2.COLORMAP_PLASMA)
+            cv2.imshow("Gercek Zamanli Derinlik Haritasi", depth_vis)
 
             if cv2.waitKey(1) & 0xFF == 27:
                 break
 
-        capL.release()
-        capR.release()
-        cv2.destroyAllWindows()
+        release_camera(capL, capR)

@@ -1,3 +1,4 @@
+import threading
 import tkinter as tk
 from vision.detector import ObjectDetector
 from vision.pose import PoseEstimator
@@ -10,9 +11,11 @@ class App:
         self.root.geometry("1000x800")
         self.root.configure(bg="black")
 
-        self.detector = ObjectDetector()
-        self.pose = PoseEstimator()
-        self.depth = DepthEstimator()
+        # Models load on first use (inside the worker thread) to keep startup fast
+        self.detector = None
+        self.pose = None
+        self.depth = None
+        self.worker = None
 
         self.direction_label = tk.Label(
             self.root, text="", font=("Arial", 36, "bold"),
@@ -49,21 +52,51 @@ class App:
                   command=self.quit_app, **btn_style).pack(pady=5)
 
     def update_direction(self, objects):
-        if not objects:
-            self.direction_label.config(text="")
-        else:
-            text = ", ".join([f"{name} at {loc}" for name, loc, _ in objects])
-            self.direction_label.config(text=text)
-        self.root.update_idletasks()
+        # Called from the worker thread; Tkinter is not thread-safe, so hop to the main loop
+        text = ", ".join(f"{name} at {loc}" for name, loc, _ in objects)
+        self.root.after(0, self.direction_label.config, {"text": text})
+
+    def _set_status(self, text):
+        self.root.after(0, self.direction_label.config, {"text": text})
+
+    def _run_in_background(self, target):
+        # One camera task at a time; they would fight over the same camera otherwise
+        if self.worker and self.worker.is_alive():
+            return
+
+        def task():
+            try:
+                target()
+                self._set_status("")
+            except Exception as e:
+                self._set_status(str(e))
+
+        self.worker = threading.Thread(target=task, daemon=True)
+        self.worker.start()
 
     def start_detection(self):
-        self.detector.observe(update_callback=self.update_direction)
+        def task():
+            if self.detector is None:
+                self._set_status("Model yükleniyor...")
+                self.detector = ObjectDetector()
+            self.detector.observe(update_callback=self.update_direction)
+        self._run_in_background(task)
 
     def start_pose(self):
-        self.pose.run()
+        def task():
+            if self.pose is None:
+                self._set_status("Model yükleniyor...")
+                self.pose = PoseEstimator()
+            self._set_status("")
+            self.pose.run()
+        self._run_in_background(task)
 
     def start_depth(self):
-        self.depth.run()
+        def task():
+            if self.depth is None:
+                self.depth = DepthEstimator()
+            self.depth.run()
+        self._run_in_background(task)
 
     def quit_app(self):
         self.root.destroy()
