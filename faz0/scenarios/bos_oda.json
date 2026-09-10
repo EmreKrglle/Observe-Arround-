@@ -1,0 +1,13 @@
+{
+  "name": "Bos oda (yalanci alarm testi)",
+  "description": "Hicbir engel yok. Bant sessiz kalmali. Burada alarm veriyorsa, sorun yuruyus salinimi ya da sensor gurultusundedir - config.py'den GAIT_SWAY_DEG ve SENSOR_NOISE_RATIO ile oynayin.",
+  "start": [6.0, 6.0],
+  "start_heading_deg": 0,
+  "walls": [
+    [0.0, 0.0, 12.0, 0.0],
+    [0.0, 12.0, 12.0, 12.0],
+    [0.0, 0.0, 0.0, 12.0],
+    [12.0, 0.0, 12.0, 12.0]
+  ],
+  "pillars": []
+}
