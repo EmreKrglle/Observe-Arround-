@@ -66,30 +66,54 @@ VL53L1X'in görüş açısı 27°. 6 sensör 60° aralıklarla dizilirse:
 En kötüsü: **tam yanlar (±90°) kör boşluğa denk geliyor** — ve koridor
 duvarları tam olarak orada.
 
-Simülasyonda ölçülen sonuç (koridor senaryosu, 25 sn):
+### Yerleşim karşılaştırması
 
-| Sensör | Kapsama | Çarpışma | Kaçırma |
-|---|---|---|---|
-| 6 | %45 | 1 | %47.9 |
-| 8 | %60 | 0 | %31.1 |
-| 12 | %90 | 0 | %20.9 |
-| 16 | %100 | 0 | %8.9 |
+`python3 tools/compare_layouts.py` her yerleşimi dört senaryoda, 5 seed ile
+ölçer (seed sabit, tüm yerleşimler aynı gürültüyü görür). İç mekân,
+kaçırma oranı:
 
-**Sonuç:** 6 sensör yetmiyor. Seçenekler:
+| Yerleşim | Ön kapsama | Koridor | Dar kapı | Açık alan | Boş oda |
+|---|---|---|---|---|---|
+| 6 eşit (eski) | %45 | %18.5 | %1.8 | %1.6 | %0.1 |
+| 8 eşit | %60 | %3.0 | %0.4 | %1.0 | %0.0 |
+| 8 ön-yoğun 7+1 | %90 | %2.2 | %0.4 | **%10.8** | %0.2 |
+| 9 ön-yoğun 7+2 | %90 | %0.8 | %0.1 | %5.4 | %0.3 |
+| **10 ön-yoğun 7+3** | %90 | %0.8 | %0.1 | %0.6 | %0.1 |
+| 12 eşit | %90 | %0.7 | %0.1 | %0.7 | %0.1 |
 
-1. Sensör sayısını artır (maliyet: her biri ~$6)
-2. Sensörleri öne yoğunlaştır — arka taraf daha az kritik, yürüdüğünüz
-   yön daha önemli
-3. Daha geniş görüş açılı sensör kullan (VL53L5CX 45°, ama ~3 kat pahalı)
+**Seçilen: 10 sensör, 7+3** (`config.SENSOR_ANGLES_DEG`). Önde -90°..+90°
+arası 30° aralıkla 7 sensör, arkada 135°/180°/225°'de 3 sensör. 12 eşit
+aralıklı sensörle aynı sonucu 2 sensör eksikle veriyor.
 
-**Öneri: 8 sensörü öne yoğunlaştırın** (ön 180°'ye 6 tane, arkaya 2 tane).
-Bu, 16 sensörün maliyeti olmadan kritik bölgede tam kapsama verir.
+Önceki öneri (8 sensör, arkada 1-2 tane) yetmiyor: açık alanda arkadan ve
+yandan yaklaşan yayaları kaçırıyor. Arka-yan bölge (104°–166°) kör kalıyor.
 
-> Bu bulgu, simülatörün maliyetini ilk gün çıkardı: donanım alınsaydı
-> aynı ders ~$40 ve iki hafta ederdi.
+> Not: Bu bölümün önceki sürümündeki kaçırma oranları (%47.9, %31.1 ...)
+> puanlayıcıdaki bir hatadan şişmişti. Engel titreşimi nabız şeklinde;
+> puanlayıcı nabzın kapalı olduğu her kareyi "kaçırma", her nabzı yeni bir
+> yalancı alarm sayıyordu. Artık motorun o anki durumuna değil, sistemin
+> uyarı kararına bakıyor (`tests/test_scoring.py`).
 
-Bir diğer bulgu: **açık alanda yalancı alarm yok.** Yürüyüş salınımını
-15°'ye kadar abartsak bile boş odada bant sessiz kalıyor.
+### Açık kalan sorunlar
+
+**1. Yalancı alarmlar: sensör gürültüsü 2 m eşiğinde titreşim yaratıyor.**
+Engel 2.0–2.1 m'deyken %2 gürültü okumayı eşiğin bir içine bir dışına
+atıyor, bant açılıp kapanıyor. Gürültü sıfırlanınca yalancı alarm her
+yerleşimde 0'a iniyor; yani sorun yerleşimde değil, karar mantığında.
+Açık alanda 3–6/dk (hedef < 1/dk). `config.OBSTACLE_MEMORY_FRAMES`
+tam bunun için tanımlanmış ama henüz hiçbir yerde kullanılmıyor. Çözüm:
+eşiğe histerezis (ör. 2.0 m'de gir, 2.2 m'de çık) ya da birkaç kare
+ardışık görme şartı.
+
+**2. Güneş altında hiçbir yerleşim yetmiyor.** Tam güneşte menzil
+4 m → 1.2 m'ye düşüyor, uyarı mesafesi (2 m) menzilin dışında kalıyor.
+16 sensörle bile açık alanda kaçırma %46. Bu sensör sayısıyla değil,
+sensör seçimiyle (güneşe dayanıklı ToF, radar) ya da güneşte uyarı
+mesafesini kısaltmakla çözülür.
+
+**3. Dar kapı senaryosunda çarpışma** her yerleşimde (16 sensör dahil)
+sürüyor. Sebep sensörler değil, ekransız moddaki basit otomatik
+yürüyücünün kapıdan geçemeyişi.
 
 ---
 
@@ -111,7 +135,9 @@ faz0/
 │   ├── mapper.py        engel listesi → motor komutları
 │   └── backends.py      sim / konsol / gerçek donanım (PCA9685)
 ├── scenarios/           JSON senaryolar
-└── tests/               54 birim testi
+├── tools/
+│   └── compare_layouts.py   sensör yerleşimlerini karşılaştırır
+└── tests/               60 birim testi
 ```
 
 `haptics/` klasörünün simülatörden bağımsız olması bilinçli:
