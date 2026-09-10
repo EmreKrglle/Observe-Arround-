@@ -1,0 +1,18 @@
+{
+  "name": "Koridor",
+  "description": "Duz bir koridor. En temel test: duvarlara carpmadan ilerleyebiliyor mu?",
+  "start": [1.0, 2.0],
+  "start_heading_deg": 0,
+  "goal": [14.0, 2.0],
+  "goal_radius": 0.7,
+  "walls": [
+    [0.0, 0.0, 15.0, 0.0],
+    [0.0, 4.0, 15.0, 4.0],
+    [0.0, 0.0, 0.0, 4.0],
+    [15.0, 0.0, 15.0, 4.0]
+  ],
+  "pillars": [
+    [5.0, 1.2, 0.25],
+    [9.0, 2.9, 0.3]
+  ]
+}

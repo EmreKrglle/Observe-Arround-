@@ -1,13 +1,14 @@
 from ultralytics import YOLO
 import cv2
 import time
+from vision.utils import CAMERA_INDEX, open_camera, release_camera
 
 class PoseEstimator:
     def __init__(self, model_path="yolov8n-pose.pt"):
         self.model = YOLO(model_path)
 
-    def run(self, cam_index=1):
-        cap = cv2.VideoCapture(cam_index)
+    def run(self, cam_index=CAMERA_INDEX):
+        cap = open_camera(cam_index)
         prev_time = 0
 
         while cap.isOpened():
@@ -28,5 +29,4 @@ class PoseEstimator:
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
-        cap.release()
-        cv2.destroyAllWindows()
+        release_camera(cap)

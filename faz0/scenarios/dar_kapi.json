@@ -1,0 +1,17 @@
+{
+  "name": "Dar kapi",
+  "description": "80 cm genisliginde bir kapidan gecis. Yon cozunurlugunun sinavi: kullanici bosluğu bulabiliyor mu, yoksa iki tarafta da engel hissedip donuyor mu?",
+  "start": [2.0, 3.0],
+  "start_heading_deg": 0,
+  "goal": [9.0, 3.0],
+  "goal_radius": 0.6,
+  "walls": [
+    [0.0, 0.0, 11.0, 0.0],
+    [0.0, 6.0, 11.0, 6.0],
+    [0.0, 0.0, 0.0, 6.0],
+    [11.0, 0.0, 11.0, 6.0],
+    [6.0, 0.0, 6.0, 2.6],
+    [6.0, 3.4, 6.0, 6.0]
+  ],
+  "pillars": []
+}
