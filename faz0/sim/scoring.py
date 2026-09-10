@@ -33,7 +33,8 @@ class Scorer:
         self._in_false_alarm = False
         self._last_xy = None
 
-    def update(self, dt, walker, world, cmds):
+    def update(self, dt, walker, world, obstacles):
+        """obstacles: sistemin gordugu [(kerteriz, mesafe), ...] listesi."""
         self.elapsed += dt
 
         # Yol uzunlugu
@@ -53,19 +54,17 @@ class Scorer:
             self.collisions += 1
         self._in_collision = colliding
 
-        # -- titresim var mi ----------------------------------------------
-        vibrating = any(c.intensity > 0.0 for c in cmds)
-        # Kalp atisi bir uyari degildir, alarm sayilmaz
-        from haptics import patterns
-        real_alert = any(
-            c.intensity > 0.0 and c.pattern in (patterns.OBSTACLE, patterns.EMERGENCY)
-            for c in cmds
-        )
+        # -- sistem uyari veriyor mu ----------------------------------------
+        # Motorun o anki acik/kapali durumuna degil, sistemin KARARINA bakilir.
+        # Engel kalibi nabiz seklindedir; nabzin kapali oldugu anlar
+        # "sessiz bant" degildir. Motor durumuna bakmak her nabiz arasini
+        # kacirma, her nabzi yeni bir yalanci alarm diye sayar.
+        alerting = any(d <= config.ALERT_DISTANCE_M for _, d in obstacles)
 
         # -- yalanci alarm -------------------------------------------------
         # Ortada engel yokken uyari veriyorsa yalanci alarmdir.
         nothing_near = clearance > config.ALERT_DISTANCE_M
-        false_now = real_alert and nothing_near
+        false_now = alerting and nothing_near
         if false_now and not self._in_false_alarm:
             self.false_alarms += 1
         self._in_false_alarm = false_now
@@ -74,7 +73,7 @@ class Scorer:
         # Engel uyari mesafesinde ama bant sessiz.
         if not nothing_near:
             self.alert_frames += 1
-            if not real_alert:
+            if not alerting:
                 self.missed_frames += 1
 
         if not self.goal_reached and world.reached_goal(walker.x, walker.y):

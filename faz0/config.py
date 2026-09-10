@@ -33,10 +33,18 @@ USE_PHANTOM_INTERPOLATION = True
 # SANAL ToF SENSORLERI
 # ---------------------------------------------------------------------------
 
-# Sensor acilari (derece). Varsayilan olarak motorlarla ayni yerlerde.
-# Gercek bir tasarimda one daha fazla sensor koymak mantikli olur -
-# bu listeyi degistirerek deneyebilirsiniz.
-SENSOR_ANGLES_DEG = [0, 60, 120, 180, 240, 300]
+# Sensor acilari (derece). Motorlardan bagimsiz; haptik katman sensor
+# sayisini bilmez, sadece kerteriz listesi alir.
+#
+# 10 sensor, on tarafa yogun ("7+3"):
+#   on  : -90..+90 arasi 30 derece aralikla 7 sensor -> 2.9 derece kor bosluk
+#   arka: 135, 180, 225 -> arkadan/yandan yaklasan yayalar icin
+#
+# tools/compare_layouts.py ile olculdu: ic mekanda 12 esit aralikli sensorle
+# ayni kacirma oranini 2 sensor eksikle veriyor. Arkada tek sensor (7+1)
+# acik alanda yayalarin %11'ini kaciriyor. Eski 6 esit yerlesim onu
+# sadece %45 goruyordu.
+SENSOR_ANGLES_DEG = [0, 30, 60, 90, 135, 180, 225, 270, 300, 330]
 
 # Her sensorun gorus konisi (derece). VL53L1X ~27 derece.
 SENSOR_FOV_DEG = 27.0
