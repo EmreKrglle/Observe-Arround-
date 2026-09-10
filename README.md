@@ -9,6 +9,9 @@ Görme engelli kullanıcılar için çevre algılama ve yönlendirme projesi.
 - **[`arsiv/`](arsiv/README.md)** — İlk sürüm (SEE): YOLOv8 ile nesne algılama,
   pose estimation ve stereo derinlik haritası.
 
+İleriki fazlar için değerlendirilen fikirler (ROS 2 vb.):
+[GELECEK_PLANLAR.md](GELECEK_PLANLAR.md)
+
 ## Hızlı Başlangıç
 ```bash
 cd faz0
