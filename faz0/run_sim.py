@@ -95,7 +95,7 @@ class Simulation:
         obstacles = readings_to_obstacles(self.readings)
         self.cmds = map_obstacles(obstacles, self.t, self.goal_bearing())
         self.backend.send(self.cmds)
-        self.scorer.update(dt, self.walker, self.world, self.cmds)
+        self.scorer.update(dt, self.walker, self.world, obstacles)
         return self.cmds
 
 
